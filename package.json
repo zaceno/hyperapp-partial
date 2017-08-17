@@ -1,0 +1,24 @@
+{
+  "name": "hyperapp-partial",
+  "version": "0.0.1",
+  "description": "Helps you structure your hyperapp code",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "browserify src/index.js --standalone partial | uglifyjs  --mangle --compress > dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zaceno/hyperapp-partial.git"
+  },
+  "author": "Zacharias Enochsson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zaceno/hyperapp-partial/issues"
+  },
+  "homepage": "https://github.com/zaceno/hyperapp-partial#readme",
+  "devDependencies": {
+    "browserify": "^14.4.0",
+    "uglify-es": "^3.0.23"
+  },
+  "dependencies": {}
+}
