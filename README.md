@@ -91,8 +91,8 @@ view: (state, actions) => <main>
 
 So, if you're like me, you ask yourself: "Wouldn't it be nice, if ..."
 
-- You could encapsulate the state, actions and views for a certain feature, declaring them *together*?
-- Your could cut out the namespace, and write your actions & views as if the state & actions of the feature were the only ones in the app?
+- You could declare state, actions and views for a particular feature together, separate from the declaration of other features?
+- Your could just forgo the namespace, writing your actions & views as if there were no other features than the one they're about?
 
 "Yes", you reply to yourself. "Yes, that would be very nice". And that's when you reach for *hyperapp-partial*.
 
