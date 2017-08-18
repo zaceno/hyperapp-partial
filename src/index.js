@@ -1,13 +1,17 @@
 
-const scopedUpdate = (scope, state, update) => val => update({[scope]: Object.assign(state[scope], val)})
+const scopedUpdate = (scope, state, update) =>
+    val =>
+        update({[scope]: Object.assign(state[scope], val)})
 
-const scopedAction = (scope, fn) => (state, actions, data)  => (update) => {
-    const retVal = fn(state[scope], actions[scope], data)
-    const sup = scopedUpdate(scope, state, update)
-    if (typeof retVal === 'function') return retVal(sup)
-    else return sup(retVal)
-}
-
+const scopedAction = (scope, fn) =>
+    (state, actions, data)  =>
+        (update) => {
+            const retVal = fn(state[scope], actions[scope], data)
+            const sup = scopedUpdate(scope, state, update)
+            if (typeof retVal === 'function') return retVal(sup)
+            else return sup(retVal)
+        }
+ 
 const scopedActions = (scope, actions) => {
     const o = {}
     for (let n in actions) {
@@ -16,9 +20,13 @@ const scopedActions = (scope, actions) => {
     return o
 }
 
-const scopedEvent = (scope, fn) =>  (state, actions, data) => fn(state[scope], actions[scope], data)
 
-const scopedEvents = function (scope, events) {
+
+const scopedEvent = (scope, fn) =>
+    (state, actions, data) =>
+        fn(state[scope], actions[scope], data)
+
+const scopedEvents = (scope, events) => {
     const o = {}
     for (let name in events) {
         if (typeof events[name] === 'function') o[name] = scopedEvent(scope, events[name])
@@ -27,15 +35,17 @@ const scopedEvents = function (scope, events) {
     return o
 }
 
-const Partial = function (emit) {
+
+
+const Partial = emit => {
   
   const widgets = {}
   
-  function bindWidget (state, actions, bound, scope, name) {
-    return (...args) => widgets[scope][name](state[scope],actions[scope], bound[scope], ...args)
-  }
+  const bindWidget = (state, actions, bound, scope, name) =>
+    (...args) =>
+        widgets[scope][name](state[scope],actions[scope], bound[scope], ...args)
   
-  function getBoundWidgets (state, actions) {
+  const getBoundWidgets = (state, actions) => {
     const o = {}
     for (let s in widgets) {
       o[s] = {}
@@ -46,33 +56,30 @@ const Partial = function (emit) {
     return o
   }
   
-  function registerWidget (state, actions, [scope, name, fn]) {
+  const registerWidget = (state, actions, [scope, name, fn]) => {
     widgets[scope] = widgets[scope] || {}
     widgets[scope][name] = fn
   }
   
-  function render (state, actions, view) {
-    return (state, actions) => view(state, actions, getBoundWidgets(state, actions))
-  }
+  const render = (state, actions, view) =>
+    (state, actions) =>
+        view(state, actions, getBoundWidgets(state, actions))
   
   return {events: {render, registerWidget}}
 }
 
-Partial.mixin = function(scope, fn) {
-  return function (emit) {
-    
-    const mixin = fn(emit)
-    
-    for (let n in (mixin.views || {})) {
-      emit('registerWidget', [scope, n, mixin.views[n]])
+Partial.mixin = (scope, fn) =>
+    (emit) => {
+        const mixin = fn(emit)
+        for (let n in (mixin.views || {})) {
+            emit('registerWidget', [scope, n, mixin.views[n]])
+        }
+        return {
+            state: {[scope]: mixin.state || {}},
+            actions: {[scope]: scopedActions(scope, mixin.actions || {})},
+            events: scopedEvents(scope, mixin.events || {}),
+        }
     }
 
-    return {
-      state: {[scope]: mixin.state || {}},
-      actions: {[scope]: scopedActions(scope, mixin.actions || {})},
-      events: scopedEvents(scope, mixin.events || {}),
-    }
-  }
-}
 
 module.exports = Partial
