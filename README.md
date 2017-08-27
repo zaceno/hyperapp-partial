@@ -43,8 +43,8 @@ To declare a "partial" (explained further below), wrap your mixin's in `partial.
 
 ```js
 
-const DogMixin = emit => {...}
-const CatMixin = emit => {...}
+const DogMixin = emit => ({...})
+const CatMixin = emit => ({...})
 
 app({
   mixins: [
@@ -75,7 +75,7 @@ By using `partial.mixin` you can declare a namespace once, and this will become 
 
 ```js
 
-const myPartial = partial.mixin('myPartial', emit => {
+const myPartial = partial.mixin('myPartial', emit => ({
     state: {
       propX: ...,
       propY: ...,
@@ -84,7 +84,7 @@ const myPartial = partial.mixin('myPartial', emit => {
       add: ...,
       subtract: ...,
     }
-})
+}))
 
 app({
   mixins: [partial, myPartial],
@@ -127,7 +127,7 @@ The state and actions are *scoped* to the namespace before being passed to actio
 
 ```js
 
-partial.mixin('myPartial', emit => {
+partial.mixin('myPartial', emit => ({
   state: {
     prop1: ...,
     prop2: ...,
@@ -155,7 +155,7 @@ partial.mixin('myPartial', emit => {
       */
     }
   }
-})
+}))
 
 ```
 
@@ -165,7 +165,7 @@ When you want to update the state with an action (wether returning or using thun
 
 ```js
 
-partial.mixin('myPartial', emit => {
+partial.mixin('myPartial', emit => ({
   ...
   actions: {
     /*
@@ -178,7 +178,7 @@ partial.mixin('myPartial', emit => {
     increment: state => ({value: state.value +1 })
   }
   ...
-})
+}))
 
 ```
 
@@ -191,12 +191,12 @@ Partial views aims to help with this. In your partial mixin, you may define a pr
 
 ```jsx
 
-const myPartial = partial.mixin('myPartial', emit => {
+const myPartial = partial.mixin('myPartial', emit => ({
   views: {
     affirmative: _ => <b>Yes</b>,
     negative: _ => <b>No</b>,
   }
-})
+}))
 
 ```
 
@@ -226,7 +226,7 @@ With partial views, you don't need to worry about passing along the appropriate 
 
 ```jsx
 
-const myPartial = partial.mixin('myPartial', emit => {
+const myPartial = partial.mixin('myPartial', emit => ({
   state: {
     name: 'John Doe',
   },
@@ -241,7 +241,7 @@ const myPartial = partial.mixin('myPartial', emit => {
     />,
     greeting: (state) => <h1>Hello, {state.name}!</h1>
   }
-})
+}))
 
 app({
   mixins: [partial, myPartial],
@@ -262,7 +262,7 @@ The *third* argument, is analogous to the third argument to the main app view. I
 
 ```jsx
 
-const myCounter = partial.mixin('myCounter', emit => {
+const myCounter = partial.mixin('myCounter', emit => ({
   
   state: {
     value: 10,
@@ -288,5 +288,5 @@ const myCounter = partial.mixin('myCounter', emit => {
     </p>
 
   }
-})
+}))
 ```
