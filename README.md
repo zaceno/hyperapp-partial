@@ -43,8 +43,8 @@ To declare a "partial" (explained further below), wrap your mixin's in `partial.
 
 ```js
 
-const DogMixin = emit => {...}
-const CatMixin = emit => {...}
+const DogMixin = emit => ({...})
+const CatMixin = emit => ({...})
 
 app({
   mixins: [
