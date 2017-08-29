@@ -330,3 +330,206 @@ test.cb('partial views are scoped', t => {
         }
     })
 })
+
+
+test.cb('partial-in-partial adds actions in 2nd level scope', t => {
+    t.plan(9)
+    const partial2 = emit => ({
+        actions: {
+            a3: _ => {},
+            a4: _ => {},
+        },
+        events: {
+            test: (state, actions) => {
+                t.is(typeof actions.a3, 'function')
+                t.is(typeof actions.a4, 'function')
+            }
+        }
+    })
+    const partial1 = partial.mixin('s1', emit =>({
+        actions: {a2: _ => {}},
+        partials: {s2: partial2},
+        events: {
+            test: (state, actions) => {
+                t.is(typeof actions.a2, 'function')
+                t.is(typeof actions.s2.a3, 'function')
+                t.is(typeof actions.s2.a4, 'function')
+            }
+        }
+    }))
+    const emit = app({
+        root: t.context.container,
+        mixins: [partial, partial1],
+        state: {},
+        actions: {
+            a1: _ => {},
+        },
+        view: _ => h('div', {}, []),
+        events: {
+            render: (state, actions, view) => {
+                setTimeout(_ => {
+                    emit('test')
+                    t.end()
+                }, 0)
+                return view
+            },
+            test: (state, actions, view) => {
+                t.is(typeof actions.a1, 'function')
+                t.is(typeof actions.s1.a2, 'function')
+                t.is(typeof actions.s1.s2.a3, 'function')
+                t.is(typeof actions.s1.s2.a4, 'function')
+           }
+        }
+    })
+})
+
+test.cb('partial-in-partial adds state to second level scope', t => {
+    const val = 'testval'
+    const partial2 = emit => ({
+        state: {baz: val},
+        events: {
+            test: state => {
+                t.deepEqual(state, {baz: val})
+            }
+        }
+    })
+    const partial1 = partial.mixin('foo', emit => ({
+        partials: {bar: partial2},
+        events: {
+            test: state => {
+                t.deepEqual(state, {bar: {baz: val}})
+            }
+        }
+    }))
+    const emit = app({
+        root: t.context.container,
+        state: {},
+        mixins: [partial, partial1],
+        view: _ => h('div', {}, []),
+        events: {
+            render: (state, actions, view) => {
+                setTimeout(_ => {
+                    emit('test')
+                    t.end()
+                }, 0)
+                return view
+            },
+            test: state => {
+                t.deepEqual(state, { foo: { bar: { baz: val } } })
+            }
+        }
+    })
+})
+
+test.cb('partial-in-partial adds views to 2nd level scope', t => {
+    t.plan(6)
+    const partial2 = emit => ({
+        views: {
+            vb: (state, actions, views) => {
+                t.pass()
+                views.ve()
+            },
+            vd: (state, actions, views) => {
+                t.pass()
+                views.vf()
+            },
+            ve: (state, actions, views) => {
+                t.pass()
+            },
+            vf: (state, actions, views) => {
+                t.pass()
+            }
+        }
+    })
+    const partial1 = partial.mixin('s1', emit => ({
+        partials: {s2: partial2},
+        views: {
+            va: (state, actions, views) => {
+                t.pass()
+                views.vc()
+                views.s2.vd()
+            },
+            vc: (state, actions, views) => {
+                t.pass()
+            }
+        }
+    }))
+    const emit = app({
+        root: t.context.container,
+        mixins: [partial, partial1],
+        state: {},
+        view: (state, actions, views) => {
+            views.s1.va()
+            views.s1.s2.vb()
+            return h('div', {}, [])
+        },
+        events: {
+            render: (state, actions, view) => {
+                setTimeout(_ => {
+                    t.end()
+                }, 0)
+                return view
+            }
+        }
+    })
+})
+
+test.cb('partial-in-partial actions and views are scoped', t => {
+    t.plan(5)
+    const partial2 = emit => ({
+        state: {baz: 'baz'},
+        actions: {
+            a: state => update => {
+                t.deepEqual(state, {baz: 'baz'})
+                update({baz: 'baz2'})
+            }
+        },
+        views: {
+            v: (state, actions) => {
+                t.deepEqual(state, {baz: 'baz2'})
+            }
+        }
+    })
+    const partial1 = partial.mixin('s1', emit => ({
+        state: {bar: 'bar'},
+        partials: {s2: partial2},
+        actions: {
+            a: (state, actions) => update => {
+                t.deepEqual(state, {bar: 'bar', s2: {baz: 'baz'}})
+                update(({bar: 'bar2'}))
+                actions.s2.a()
+            }
+        },
+        views: {
+            v: (state, actions, views) => {
+                t.deepEqual(state, {bar: 'bar2', s2: {baz: 'baz2'}})
+                views.s2.v()
+            }
+        }
+    }))
+    app({
+        root: t.context.container,
+        mixins: [partial, partial1],
+        state: {foo: 'foo'},
+        actions: {
+            a: (state, actions) => update => {
+                update({foo: 'foo2'})
+                actions.s1.a()
+            }
+        },
+        view: (state, actions, views) => {
+            t.deepEqual(state, {foo: 'foo2', s1: {bar: 'bar2', s2: {baz: 'baz2'}}})
+            views.s1.v()
+            return h('div', {}, [])
+        },
+        events: {
+            render: (state, actions, view) => {
+                actions.a()
+                setTimeout(_ => {
+                    t.end()
+                }, 0)
+                return view
+            }
+        }
+    })
+})
