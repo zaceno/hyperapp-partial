@@ -290,3 +290,67 @@ const myCounter = partial.mixin('myCounter', emit => ({
   }
 }))
 ```
+
+
+## Partials in Partials
+
+Suppose your app is divided into a few major sections, and you described each with a partial. Now suppose there is a particular stateful UI-element repeated in some of the sections. It would be convenient to encapsulate that element's state, actions, and views into a partial, so it could be reused. This is why *partials can have partials*.
+
+When you declare partials in the main app, you need to wrap your partial definitions in `partial.mixin(scope, ...)` -- but when you add a child partial to a parent partial, you simply declare it in the parent's `partials` property.
+
+```
+const childPartial = emit => ({
+  state: {foo: 'foo'},
+  actions: {do: ...}
+})
+
+const parentPartial = emit => ({
+  ...,
+  partials: {
+    child: childPartial
+  }
+}}
+
+app({
+  mixins: [partial, partial.mixin('parent', parentPartial)
+})
+```
+
+In this example, the parentPartial can access the childPartial's state as `state.child.foo`. The main app can access it via: `state.parent.child.foo`. Corresponding access rules apply for actions and views.
+
+There is no limit to how deep the partial-hierarchy may go.
+
+
+## Communication between partials
+
+Partials may seem similar to the stateful components of other frameworks. The main difference is that the partials's state, actions and views all live in the *global* state/action/view trees. It is only *within* a partial we are limited to particulart branches of the trees.
+
+This is convenient, but comes at the expense of *global access*.
+
+Ideally, you would structure your app so this is not a problem. Try to make it so that any partial which needs access to other partials lives *above* them in the hierarchy.
+
+This is not always possible, though. In those cases, partials may not be the solution. Consider letting all the interacting state and actions live together at the same level.
+
+If that doesn't work for you, there are always custom events.
+
+When something significant happens in one partial (that another partial cares about) you may `emit('mypartial:somethingHappened', withData)`. The other partial may react to these events by handling `'mypartial:somethingHappened'` in its `events` property.
+
+Since calls to `emit` returns whatever the last handler of that event returns, you can also use custom events to read data from outside the scope of your partial. 
+
+For instance, you can set up this event-handler:
+
+```
+app({
+  ...
+  events: {
+    ...,
+    globalScope: (state, actions, fn) => fn(state, actions)
+  }
+})
+```
+
+Now you may use that event to access any part of the state, or call any action, from within your partial:
+
+```
+const someGlobalState = emit('globalScope', state => state.somewhere.beyond.myscope)
+```
