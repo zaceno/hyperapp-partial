@@ -1,5 +1,5 @@
 require('undom/register')
-const {h, app} = require('hyperapp')
+const {h, app} = require('./hyperapp-master')
 const test = require('ava')
 const partial = require('../src/')
 
@@ -494,7 +494,7 @@ test.cb('partial-in-partial actions and views are scoped', t => {
         state: {bar: 'bar'},
         partials: {s2: partial2},
         actions: {
-            a: (state, actions) => update => {
+            b: (state, actions) => update => {
                 t.deepEqual(state, {bar: 'bar', s2: {baz: 'baz'}})
                 update(({bar: 'bar2'}))
                 actions.s2.a()
@@ -512,9 +512,9 @@ test.cb('partial-in-partial actions and views are scoped', t => {
         mixins: [partial, partial1],
         state: {foo: 'foo'},
         actions: {
-            a: (state, actions) => update => {
+            c: (state, actions) => update => {
                 update({foo: 'foo2'})
-                actions.s1.a()
+                actions.s1.b()
             }
         },
         view: (state, actions, views) => {
@@ -524,12 +524,129 @@ test.cb('partial-in-partial actions and views are scoped', t => {
         },
         events: {
             render: (state, actions, view) => {
-                actions.a()
+                actions.c()
                 setTimeout(_ => {
                     t.end()
                 }, 0)
                 return view
             }
         }
+    })
+})
+
+
+test.cb('partial merges to current state for async updates', t => {
+    t.plan(1)
+    const testPartial = emit => ({
+        state: {
+            foo: null,
+            bar: null,
+        },
+        actions: {
+            test: (state, actions) => update => {
+                setTimeout(_ => {
+                    update({foo: 'foo'})
+                    setTimeout(_ => {
+                        update({bar: 'bar'})
+                        emit('testCheck')
+                    }, 1)
+                }, 1)
+            }
+        }
+    })
+    const emit = app({
+        root: t.context.container,
+        view: _ => h('div', {}, []),
+        state: {},
+        mixins: [partial, partial.mixin('testPartial', testPartial)],
+        events: {
+            render (state, actions, view) {
+                setTimeout(_ => {
+                    actions.testPartial.test()
+                }, 0)
+                return view
+            },
+            testCheck (state) {
+                t.deepEqual(state.testPartial, {foo: 'foo', bar: 'bar'})
+                t.end()
+            }
+        }
+    })
+})
+
+test.cb('partial actions with thunks with reducers', t => {
+    t.plan(2)
+    const partial2 = emit => ({
+        state: {
+            foo: 'foo',
+            bar: 'bar',
+            baz: 'baz',
+        },
+        actions: {
+            test: state => update => {
+                update({foo: 'foo2'})
+                setTimeout(_ => {
+                    update(state => {
+                        state.bar = 'bar2'
+                    })
+                }, 100)
+                setTimeout(_ => {
+                    update(state => {
+                        state.baz = 'baz2'
+                    })
+                }, 200)
+            } 
+        }
+    })
+    const partial1 = partial.mixin('s1', emit => ({
+        partials: {s2: partial2}
+    }))
+    const emit = app({
+        mixins: [partial, partial1],
+        state: {foo: 'foo', testing: false},
+        actions: {
+            testing: _ => ({testing: true}),
+            doTest: (state, actions) => {
+                t.deepEqual(state, {
+                    foo: 'foo',
+                    testing: true,
+                    s1: {
+                        s2: {
+                            foo: 'foo',
+                            bar: 'bar',
+                            baz: 'baz'
+                        }
+                    }
+                })
+                actions.s1.s2.test()
+                setTimeout(_ => {
+                    t.deepEqual(state, {
+                        foo: 'foo',
+                        testing: true,
+                        s1: {
+                            s2: {
+                                foo: 'foo2',
+                                bar: 'bar2',
+                                baz: 'baz2'
+                            }
+                        }
+                    })
+                    
+                    t.end()
+                }, 300)
+           }
+        },
+        events: {
+            getState: state => state,
+            render: (state, actions, view) => {
+                if (state.testing) return view
+                setTimeout(_ => {
+                    actions.testing()
+                    actions.doTest()
+                }, 0)
+                return view
+            }
+        },
+        view: _ => h('div', {}, [])
     })
 })

@@ -1,29 +1,48 @@
+var EVENT_RENDER = 'render',
+    EVENT_RENDER_WIDGET    = 'partial:render',
+    EVENT_REGISTER_WIDGETS = 'partial:register';
 
-function mergeArraySets (a, b) {
+function objAssign (a, b) {
+    for (var n in b) a[n] = b[n]
+    return a
+}
+
+function extract(path, o) {
+    if (path.length === 0) {
+        return o
+    } else {
+        return extract(path.slice(1), o[path[0]])
+    }
+}
+
+function assign(path, o, v) {
+    if (path.length === 1) {
+        o[path[0]] = v
+    } else {
+        o[path[0]] = assign(path.slice(1), o[path[0]], v)
+    }
+    return o
+}
+
+function mergeArrayHashes (a, b) {
     var o = {}
     for (var n in a) o[n] = [].concat(a[n])
     for (var m in b) o[m] = (o[m] || []).concat(b[m])
     return o
 }
 
-function objAssign (a, b) {
-    var o = {}
-    for (var n in a) o[n] = a[n]
-    for (var m in b) o[m] = b[m]
-    return o
-}
 
 function wrapFunctionTree (wrapper) {
     return function wrapTree (tree) {
-        var o = []
+        var o = {}
         for (var n in tree) {
-            o[n] = (typeof tree[n] === 'function' ? wrapper : wrapTree)(tree[n])
+            o[n] = (typeof tree[n] === 'function' ? wrapper : wrapTree)(tree[n], n)
         }
         return o
     }
 }
 
-function wrapArraySet (wrapper) {
+function wrapArrayHash (wrapper) {
     return function (set) {
         var o = {}
         for (var n in set) {
@@ -33,32 +52,52 @@ function wrapArraySet (wrapper) {
     }
 }
 
-function scopedActionSet (actions, scope) {
-    return wrapFunctionTree(function(action) {
-        return function (state, actions, data) {
-            return function (update) {
-                var scopedUpdate = function (x) {
-                    var o = {}
-                    o[scope] = objAssign(state[scope], x)
-                    update(o)
-                }
-                var retVal = action(state[scope], actions[scope], data)
-                if (typeof retVal === 'function') retVal(scopedUpdate)
-                else scopedUpdate(retVal)
-            }
+function scopePath(scope, path) {
+    var p = path ? path.slice() : []
+    p.unshift(scope)
+    return p
+}
+
+function scopedUpdater(update, path) {
+    return function (value) {
+        update(function (state) {
+            if (typeof value === 'function') value = value(extract(path, state))
+            return assign(path, state, objAssign(extract(path, state), value))
+        })    
+    }
+}
+
+function scopedAction(scope, action) {
+    var originalAction = action.oa || action
+    var path = scopePath(scope, originalAction.path)
+    originalAction.path = path
+
+    var myAction = function (S, A, D) {
+        return function (update) {
+            var x = originalAction(extract(path, S), extract(path, A), D)
+            var u = scopedUpdater(update, path)
+            if (typeof x === 'function') x(u)
+            else u(x)
         }
+    }
+    myAction.oa = originalAction
+    return myAction
+}
+function scopedActionTree (scope, actions) {
+    return wrapFunctionTree(function(action, n) {
+        return scopedAction(scope, action, n)
     })(actions)
 }
 
-function scopedEventSet (events, scope) {
-    return wrapArraySet(function (handler) {
+function scopedEventHash (events, scope) {
+    return wrapArrayHash(function (handler) {
         return function (state, actions, data) {
             return handler(state[scope], actions[scope], data)
         }
     })(events)
 }
 
-function scopedWidgetSet (widgets, scope) {
+function scopedWidgetTree (widgets, scope) {
     return wrapFunctionTree(function (widget) {
         return function (state, actions, widgets, props, children) {
             return widget(state[scope], actions[scope], widgets[scope], props, children)
@@ -66,15 +105,15 @@ function scopedWidgetSet (widgets, scope) {
     })(widgets)
 }
 
-function makeWidgetSet (widgets, emit) {
+function makeWidgetTree (widgets, emit) {
     return wrapFunctionTree(function (widget) {
         return function (props, children) {
-            return emit('partial:render', [widget, props, children])
+            return emit(EVENT_RENDER_WIDGET, [widget, props, children])
         }
     })(widgets)
 }
 
-function partialMixin (scope, fn, emit) {
+function partialMixin (emit, scope, fn) {
     var mixin   = fn(emit),
         state   = (mixin.state || {}),
         actions = (mixin.actions || {}),
@@ -82,46 +121,43 @@ function partialMixin (scope, fn, emit) {
         views   = (mixin.views || {}),
         sub;
     for (var n in (mixin.partials || {})) {
-        sub = partialMixin(n, mixin.partials[n], emit)
+        sub = partialMixin(emit, n, mixin.partials[n])
         state[n] = sub.state
         actions[n] = sub.actions
         views[n] = sub.views
-        events = mergeArraySets(events, sub.events)
+        events = mergeArrayHashes(events, sub.events)
     }
     return {
         state: state,
-        actions: scopedActionSet(actions, scope),
-        events: scopedEventSet(events, scope),
-        views: scopedWidgetSet(views, scope),
+        actions: scopedActionTree(scope, actions),
+        events: scopedEventHash(events, scope, emit),
+        views: scopedWidgetTree(views, scope, emit),
     }
 }
 
 
 function Partial (emit) {
-    var widgets = {}
-    return {
-        events: {
-            render: function (state, actions, view) {
-                return function (state, actions) {
-                    return view(state, actions, widgets)
-                }
-            },
-            'partial:render': function (state, actions, args) {
-                var widget   = args[0],
-                    props    = args[1],
-                    children = args[2];
-                return widget(state, actions, widgets, props, children)
-            },
-            'partial:register': function (state, actions, args) {
-                widgets[args[0]] = args[1]
-            }
+    var widgets = {}, events = {};
+    events[EVENT_RENDER_WIDGET] = function (state, actions, args) {
+        var widget   = args[0],
+            props    = args[1],
+            children = args[2];
+        return widget(state, actions, widgets, props, children)
+    }
+    events[EVENT_REGISTER_WIDGETS] = function (state, actions, args) {
+        widgets[args[0]] = args[1]
+    }
+    events[EVENT_RENDER] = function (state, actions, view) {
+        return function (state, actions) {
+            return view(state, actions, widgets)
         }
     }
+    return { events: events }
 }
 Partial.mixin = function (scope, fn) {
     return function (emit) {
-        var mixin = partialMixin(scope, fn, emit)
-        emit('partial:register', [scope, makeWidgetSet(mixin.views, emit)])
+        var mixin = partialMixin(emit, scope, fn)
+        emit(EVENT_REGISTER_WIDGETS, [scope, makeWidgetTree(mixin.views, emit)])
         var scopedMixin = {
             state: {},
             actions: {},
