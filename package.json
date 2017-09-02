@@ -2,10 +2,10 @@
   "name": "hyperapp-partial",
   "version": "0.4.1",
   "description": "Helps you structure your hyperapp code",
-  "main": "dist/index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "ava test/*.test.js",
-    "build": "browserify src/index.js  --standalone partial | uglifyjs --mangle --compress > dist/index.js"
+    "build": "browserify src/index.js  --standalone partial | uglifyjs --mangle --compress > dist/hyperapp-partial.umd.js"
   },
   "repository": {
     "type": "git",
