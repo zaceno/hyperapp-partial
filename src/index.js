@@ -2,6 +2,8 @@ var EVENT_RENDER = 'render',
     EVENT_RENDER_WIDGET    = 'partial:render',
     EVENT_REGISTER_WIDGETS = 'partial:register';
 
+function isPromise (x) { return x && (typeof x.then === 'function') }
+
 function objAssign (a, b) {
     for (var n in b) a[n] = b[n]
     return a
@@ -76,8 +78,9 @@ function scopedAction(scope, action) {
         return function (update) {
             var x = originalAction(extract(path, S), extract(path, A), D)
             var u = scopedUpdater(update, path)
-            if (typeof x === 'function') x(u)
-            else u(x)
+            if (isPromise(x)) return x.then(u)
+            if (typeof x === 'function') return x(u)
+            u(x)
         }
     }
     myAction.oa = originalAction

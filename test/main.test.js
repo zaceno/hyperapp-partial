@@ -650,3 +650,76 @@ test.cb('partial actions with thunks with reducers', t => {
         view: _ => h('div', {}, [])
     })
 })
+
+
+test.cb('async partial actions', t => {
+    t.plan(1)
+    const asyncData = {foo: 'fake'}
+    const asyncFetch = time => new Promise(resolve => setTimeout(_ => resolve(asyncData), time))
+    const p1 = emit => ({
+        state: {foo: 'initial'},
+        actions: {
+            promised: (state, actions) => asyncFetch(1),            
+        }
+    })
+    const emit = app({
+        root: t.context.container,
+        mixins: [partial, partial.mixin('s1', p1)],
+        view: _ => h('div', {}, []),
+        state: {testing: false},
+        actions: {
+            test: (state, actions) => update => {
+                update({testing: true})
+                actions.s1.promised()
+                .then(function () {
+                    t.is(emit('getState').s1.foo, 'fake')
+                    t.end()
+                })
+            },
+        },
+        events: {
+            getState: state => state,
+            render: (state, actions, view) => {
+                if (state.testing) return;
+                setTimeout(_ => {
+                    actions.test()
+                }, 0)
+                return view
+            }
+        }
+    })
+})
+
+test.cb('partial actions return what they return', t => {
+    t.plan(1)
+    const testData = 'dumb data'
+    const p1 = emit => ({
+        state: {foo: 'initial'},
+        actions: {
+            testAction: (state, actions) => update => testData,            
+        }
+    })
+    const emit = app({
+        root: t.context.container,
+        mixins: [partial, partial.mixin('s1', p1)],
+        view: _ => h('div', {}, []),
+        state: {testing: false},
+        actions: {
+            test: (state, actions) => update => {
+                update({testing: true})
+                t.is(actions.s1.testAction(), testData)
+                t.end()
+            },
+        },
+        events: {
+            getState: state => state,
+            render: (state, actions, view) => {
+                if (state.testing) return;
+                setTimeout(_ => {
+                    actions.test()
+                }, 0)
+                return view
+            }
+        }
+    })
+})

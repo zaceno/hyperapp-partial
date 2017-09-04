@@ -291,6 +291,58 @@ const myCounter = partial.mixin('myCounter', emit => ({
 }))
 ```
 
+## Async actions in partials
+
+### Handle promises in actions
+
+When you need to, for example, fetch some data to put in your state, it is appropriate to use [thunks]
+
+```js
+actions: {
+  reloadData: (state, actions) => update => {
+    update({fetching: true})
+    fetch(someurl)
+    .then(data => {
+      update({
+          fetching: false,
+          data: data
+      })
+    })
+  }
+}
+```
+
+The update function works just like in normal hyperapp, but operates on the scoped state. 
+
+Beware, however, that if you need to calculate what you `update` when a promise resolves, that you don't use the state passed into the action. That state is old! Instead, pass a [reducer] to
+your update function, to access the latest state. 
+
+```js
+actions: {
+  fetchMore: (state, actions) => update => {
+    update({fetching: true})
+    fetch(someurl)
+    .then(data => {
+      update(state => {
+        return {
+          fetching: false,
+          data: data,
+          fetchedSoFar: state.fetchedSoFar + data.length
+        }
+      })
+    })
+  }
+}
+```
+
+The state provided to the reducer will be scoped to the partial. Everything should work as if your partial were a hyperapp-app unto itself.
+
+### Updating state when a promise resolves
+
+If you use a promise in your action, and *return* that promise, the state will be updated with
+what that promise resolves to.
+
+This is a departure from how regular hyperapp actions behave, as they will simply return the promise. The same behavior can be achieved for regular hyperapp actions with a mixin.
 
 ## Partials in Partials
 
