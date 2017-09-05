@@ -1,6 +1,6 @@
 {
   "name": "hyperapp-partial",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Helps you structure your hyperapp code",
   "main": "src/index.js",
   "scripts": {
