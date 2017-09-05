@@ -2,6 +2,8 @@
 
 Helps you structure your hyperapp code. Docs are a work in progress. For now: see this [example on codepen](https://codepen.io/zaceno/pen/XaVmZL?editors=0010)
 
+Incompatible with versions of hyperapp < 0.12.1
+
 ## Should I use this?
 
 Depends. Everyone's app is different, and everyone likes to code in different ways. But if this sounds familiar, you may want to give it a try:
