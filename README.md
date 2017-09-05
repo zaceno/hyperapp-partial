@@ -1,6 +1,11 @@
 # hyperapp-partial
 
-Helps you structure your hyperapp code. Docs are a work in progress. For now: see this [example on codepen](https://codepen.io/zaceno/pen/XaVmZL?editors=0010)
+Helps you structure your hyperapp code.
+
+Some head-first examples: 
+
+[Tab-layout partial](https://codepen.io/zaceno/pen/GvLQOB)
+[Demo various features](https://codepen.io/zaceno/pen/XaVmZL)
 
 Incompatible with versions of hyperapp < 0.12.1
 
