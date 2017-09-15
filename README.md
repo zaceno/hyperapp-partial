@@ -4,7 +4,7 @@ Helps you structure your hyperapp code.
 
 Some head-first examples: 
 
-- [Tab-layout partial](https://codepen.io/zaceno/pen/GvLQOB)
+- [Tab-layout partial](https://codepen.io/zaceno/pen/KXpZRj)
 - [Demo various features](https://codepen.io/zaceno/pen/XaVmZL)
 
 Incompatible with versions of hyperapp < 0.12.1
