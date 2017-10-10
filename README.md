@@ -1,3 +1,15 @@
+***NOTE*** *This package is no longer maintained*
+
+The last release of hyperapp-partial is compatible with v0.12.1 of Hyperapp. 
+
+The main benefit of hyperapp-partial was that it let you split your state/actions into scoped modules. Since v0.15.0 (not yet released at time of writing) Hyperapp has this feature *built in*. Hence I am happy to decomission hyperapp-partial.
+
+However, Hyperapp does not yet have an equivalent to "partial views". If you're interested in those, have a look at https://github.com/zaceno/hyperapp-module-views
+
+Post 0.12.1, Hyperapp removed the "custom events" feature. If you were using events to communicate between partials, you may be interested in https://github.com/zaceno/hyperapp-events
+
+--------------------------------------------
+
 # hyperapp-partial
 
 Helps you structure your hyperapp code.
