@@ -42,13 +42,13 @@ function collectPartials (opts) {
 }
 
 export default function (app) {    
-    return function (opts) {
+    return function (opts, container) {
         var collectedOpts = collectPartials(opts)
         var oView = collectedOpts.view
         collectedOpts.view = function (state, actions) {
             oView(state, actions, getWiredViews(state, actions, collectedOpts.views))
         }
-        var actions = app(collectedOpts)
+        var actions = app(collectedOpts, container)
         collectedOpts.init.forEach(function (f) { f(actions) })
         return actions
     }
