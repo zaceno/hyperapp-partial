@@ -1,1 +1,0 @@
-{"version":3,"file":"hyperapp-partial.js","sources":["../src/index.js"],"sourcesContent":["\n\nexport default app => opts => {\n    return app(opts)\n}"],"names":[],"mappings":";;;;;;AAEA,YAAe,GAAG,IAAI,IAAI,IAAI;IAC1B,OAAO,GAAG,CAAC,IAAI,CAAC;;;;;;;;;"}
