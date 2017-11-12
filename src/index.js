@@ -19,7 +19,7 @@ function getWiredViews(state, actions, views) {
 
 function scopedInit(name, inits) {
     return inits.map(function (f) {
-        return function (actions) {
+        return function (actions) {
             f(actions[name])
         }
     })
