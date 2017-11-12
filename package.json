@@ -1,6 +1,6 @@
 {
   "name": "hyperapp-partial",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Helps you structure your hyperapp code",
   "main": "dist/hyperapp-partial.umd.js",
   "module": "src/index.js",
