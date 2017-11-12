@@ -2,10 +2,13 @@
   "name": "hyperapp-partial",
   "version": "0.5.0",
   "description": "Helps you structure your hyperapp code",
-  "main": "src/index.js",
+  "main": "dist/hyperapp-partial.umd.js",
+  "module": "src/index.js",
   "scripts": {
-    "test": "ava test/*.test.js",
-    "build": "browserify src/index.js  --standalone partial | uglifyjs --mangle --compress > dist/hyperapp-partial.umd.js"
+    "build:umd": "rollup -i src/index.js -m -f umd -n partial -o dist/hyperapp-partial.umd.js",
+    "build:minify": "uglifyjs dist/hyperapp-partial.umd.js -o dist/hyperapp-partial.umd.js --mangle --compress --in-source-map dist/hyperapp-partial.umd.js.map --source-map filename=dist/hyperapp-partial.umd.js.map",
+    "build": "npm run build:umd && npm run build:minify",
+    "test": "npm run build && ava test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -19,10 +22,9 @@
   "homepage": "https://github.com/zaceno/hyperapp-partial#readme",
   "devDependencies": {
     "ava": "^0.22.0",
-    "browserify": "^14.4.0",
-    "hyperapp": "^0.12.0",
-    "uglify-js": "^3.0.28",
-    "undom": "^0.3.3"
-  },
-  "dependencies": {}
+    "hyperapp": "^0.16.0",
+    "jsdom": "^11.3.0",
+    "rollup": "^0.51.5",
+    "uglify-js": "^3.1.9"
+  }
 }
