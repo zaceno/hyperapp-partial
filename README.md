@@ -1,3 +1,5 @@
+NOTICE: This repository is not compatible with recent hyperapp releases, and no longer maintained. Get in touch if you'd like that to change
+
 # hyperapp-partial
 
 Simplify composing apps from smaller, encapsulating parts. Keeps down the cognitive load of a complex hyperapp-application
